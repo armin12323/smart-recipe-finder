@@ -27,7 +27,7 @@ function App() {
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log("Current ingredients: ", event.target.value);
+    console.log("Current ingredients!: ", event.target.value);
     setInputValue(event.target.value);
   };
 
