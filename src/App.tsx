@@ -1,35 +1,46 @@
 import React, {useState, ChangeEvent} from 'react';
 import logo from './logo.svg';
 import './App.css';
+import axios from 'axios';
 
 
 const styles: { container: React.CSSProperties, input: React.CSSProperties } = {
   container: {
     display: 'flex',
-    flexDirection: 'column',  // Stack elements vertically
-    alignItems: 'center',  // Center content horizontally
-    justifyContent: 'center',  // Center content vertically (if the container has height)
-    height: '100vh',  // Full height of the viewport for vertical centering
-    textAlign: 'center',  // Optional: centers text horizontally
+    flexDirection: 'column',  
+    alignItems: 'center',  
+    justifyContent: 'center',  
+    height: '100vh',  
+    textAlign: 'center',  
     padding: '20px',
   },
   input: {
     padding: '10px',
     fontSize: '16px',
-    width: '300px',  // Define a width for the input
-    marginTop: '10px',  // Space between input and previous content
-    borderRadius: '4px',  // Optional: rounded corners
-    border: '1px solid #ccc',  // Optional: border style for the input
+    width: '300px',  
+    marginTop: '10px',  
+    borderRadius: '4px',  
+    border: '1px solid #ccc',  
   },
 };
 
 function App() {
   const [inputValue, setInputValue] = useState('');
+  const [response, setResponse] = useState('');
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     console.log("Current ingredients!: ", event.target.value);
     setInputValue(event.target.value);
   };
+
+  const sendData = async() => {
+    try {
+      const res = await axios.post('http://localhost:5000/process', {inputValue});
+      setResponse(res.data.message);
+    } catch (error) {
+      console.error('Error sending data: ', error);
+    }
+  }
 
   return (
     <div style={styles.container}>
@@ -44,6 +55,8 @@ function App() {
         placeholder='Ingredients'
         style={styles.input}
       />
+      <button onClick={sendData}>Send</button>
+      {response && <p>Response: {response}</p>}
       <p>You typed: {inputValue}</p>
     </div>
   );
