@@ -25,41 +25,47 @@ const styles: { container: React.CSSProperties, input: React.CSSProperties } = {
 };
 
 function App() {
-  const [inputValue, setInputValue] = useState('');
-  const [response, setResponse] = useState('');
+  const [topic, setTopic] = useState('');
+  const [articles, setArticles] = useState<any[]>([]);
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log("Current ingredients!: ", event.target.value);
-    setInputValue(event.target.value);
+  const fetchNews = async(topic: string) => {
+    const response = await axios.get('http://localhost:5000/fetch_news?query=${topic}');
+    setArticles(response.data.articles)
   };
 
-  const sendData = async() => {
-    try {
-      const res = await axios.post('http://localhost:5000/process', {inputValue});
-      setResponse(res.data.message);
-    } catch (error) {
-      console.error('Error sending data: ', error);
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchNews(topic);
   }
 
   return (
     <div style={styles.container}>
-      <h1>Welcome to Armin's Smart Recipe Finder!</h1>
+      <h1>Welcome to Armin's News Aggregator!</h1>
       <p>This is the beginning of this website, stay tuned for more!</p>
-      <p>Enter ingredients below.</p>
-      
-      <input
-        type='text'
-        value={inputValue}
-        onChange={handleInputChange}
-        placeholder='Ingredients'
-        style={styles.input}
-      />
-      <button onClick={sendData}>Send</button>
-      {response && <p>Response: {response}</p>}
-      <p>You typed: {inputValue}</p>
+      <p>Enter topics below.</p>
+
+      <form onSubmit={handleSearch}>
+        <input
+          type='text'
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder='Enter a topic'
+        />
+
+        <button type='submit'>Search</button>
+      </form>
+
+      <div>
+        {articles.map((article, index) => ( // Corrected syntax here
+          <div key={index}>
+            <h3>{article.title}</h3>
+            <p>{article.description}</p>
+            <a href={article.url} target='_blank' rel='noopener noreferrer'>Read more</a>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
 
 export default App;
