@@ -3,69 +3,146 @@ import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
 
+type FrequencyOption = "Once" | "Daily" | "Weekly" | "Monthly";
 
-const styles: { container: React.CSSProperties, input: React.CSSProperties } = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',  
-    alignItems: 'center',  
-    justifyContent: 'center',  
-    height: '100vh',  
-    textAlign: 'center',  
-    padding: '20px',
-  },
-  input: {
-    padding: '10px',
-    fontSize: '16px',
-    width: '300px',  
-    marginTop: '10px',  
-    borderRadius: '4px',  
-    border: '1px solid #ccc',  
-  },
-};
+const MessageScheduler: React.FC = () => {
+  const [message, setMessage] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [phoneNumbers, setPhoneNumbers] = useState<string[]>([]);
+  const [frequency, setFrequency] = useState<FrequencyOption>("Once");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-function App() {
-  const [topic, setTopic] = useState('');
-  const [articles, setArticles] = useState<any[]>([]);
-
-  const fetchNews = async(topic: string) => {
-    const response = await axios.get('http://localhost:5000/fetch_news?query=${topic}');
-    setArticles(response.data.articles)
+  const addPhoneNumber = () => {
+    if (phoneNumber && /^(\+1)?\d{10}$/.test(phoneNumber)) {
+      if (!phoneNumbers.includes(phoneNumber)) {
+        setPhoneNumbers([...phoneNumbers, phoneNumber]);
+        setPhoneNumber("");
+      } else {
+        alert("This phone number is already in the list.");
+      }
+    } else {
+      alert("Please enter a valid 10-digit phone number.");
+    }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchNews(topic);
-  }
+  const removePhoneNumber = (number: string) => {
+    setPhoneNumbers(phoneNumbers.filter((num) => num !== number));
+  };
+
+  const handleSubmit = async () => {
+    if (!message) {
+      alert("Please enter a message.");
+      return;
+    }
+    if (phoneNumbers.length === 0) {
+      alert("Please add at least one phone number.");
+      return;
+    }
+
+    const payload = {
+      message,
+      phoneNumbers,
+      frequency,
+    };
+
+    try {
+      setIsLoading(true);
+      // Replace with your backend endpoint
+      const response = await axios.post("http://localhost:5000/api/schedule-message", payload);
+      alert("Message scheduled successfully: " + response.data.message);
+    } catch (error: any) {
+      console.error("Error scheduling message:", error);
+      alert("Failed to schedule the message. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div style={styles.container}>
-      <h1>Welcome to Armin's News Aggregator!</h1>
-      <p>This is the beginning of this website, stay tuned for more!</p>
-      <p>Enter topics below.</p>
-
-      <form onSubmit={handleSearch}>
-        <input
-          type='text'
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder='Enter a topic'
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
+      <h1>Message Scheduler</h1>
+      
+      {/* Input for Message */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="message" style={{ display: "block", fontWeight: "bold" }}>Text Message:</label>
+        <textarea
+          id="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={4}
+          style={{ width: "100%", padding: "10px" }}
+          placeholder="Type your message here..."
         />
+      </div>
 
-        <button type='submit'>Search</button>
-      </form>
+      {/* Input for Phone Numbers */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="phoneNumber" style={{ display: "block", fontWeight: "bold" }}>Phone Number:</label>
+        <input
+          id="phoneNumber"
+          type="text"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          placeholder="Enter 10-digit phone number"
+          style={{ padding: "10px", width: "calc(100% - 90px)", marginRight: "10px" }}
+        />
+        <button onClick={addPhoneNumber} style={{ padding: "10px" }}>Add</button>
+      </div>
 
+      {/* List of Phone Numbers */}
+      {phoneNumbers.length > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <h3>Phone Numbers:</h3>
+          <ul>
+            {phoneNumbers.map((num, index) => (
+              <li key={index} style={{ marginBottom: "10px" }}>
+                {num}{" "}
+                <button
+                  onClick={() => removePhoneNumber(num)}
+                  style={{
+                    color: "red",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Dropdown for Frequency */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="frequency" style={{ display: "block", fontWeight: "bold" }}>Frequency:</label>
+        <select
+          id="frequency"
+          value={frequency}
+          onChange={(e) => setFrequency(e.target.value as FrequencyOption)}
+          style={{ padding: "10px", width: "100%" }}
+        >
+          <option value="Once">Once</option>
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Monthly">Monthly</option>
+        </select>
+      </div>
+
+      {/* Submit Button */}
       <div>
-        {articles.map((article, index) => ( // Corrected syntax here
-          <div key={index}>
-            <h3>{article.title}</h3>
-            <p>{article.description}</p>
-            <a href={article.url} target='_blank' rel='noopener noreferrer'>Read more</a>
-          </div>
-        ))}
+        <button
+          onClick={handleSubmit}
+          style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer" }}
+          disabled={isLoading}
+        >
+          {isLoading ? "Scheduling..." : "Schedule Message"}
+        </button>
       </div>
     </div>
   );
 };
 
-export default App;
+export default MessageScheduler;
